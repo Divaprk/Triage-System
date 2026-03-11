@@ -85,6 +85,11 @@ CHEST_PAIN_POS_ANCHORS = [
 CHEST_PAIN_NEG_ANCHORS = [
     # chest specifically fine
     "my chest feels fine",
+    "my chest feels good",
+    "my chest feels great",
+    "my chest feels okay",
+    "my chest feels well",
+    "chest feels good",
     "no chest pain",
     "chest feels normal",
     "no pressure in my chest",
@@ -99,6 +104,14 @@ CHEST_PAIN_NEG_ANCHORS = [
     "I have no chest issues",
     "no pain in my heart",
     "I have no chest pain",
+    # lung variants — "my lung/lungs feel good/fine" should not trigger chest pain
+    "my lungs feel fine",
+    "my lungs feel good",
+    "my lungs feel healthy",
+    "my lungs are clear",
+    "my lung feels good",
+    "lungs feel good",
+    "lungs are healthy",
     # breathlessness without chest pain — teaches the model that
     # breathing complaints are not chest pain
     "I cannot breathe",
@@ -161,6 +174,8 @@ BREATHLESSNESS_POS_ANCHORS = [
 BREATHLESSNESS_NEG_ANCHORS = [
     # breathing specifically fine
     "I can breathe fine",
+    "I can breathe very well",
+    "I can breathe well",
     "breathing is normal",
     "no trouble breathing",
     "I can breathe easily",
@@ -175,6 +190,11 @@ BREATHLESSNESS_NEG_ANCHORS = [
     "I have no breathing issues",
     "not short of breath",
     "my lungs feel fine",
+    "my lungs feel good",
+    "my lungs feel healthy",
+    "lungs feel good",
+    "breathing feels great",
+    "I breathe well",
     # chest pain without breathlessness — teaches the model that
     # chest complaints are not breathlessness
     "my chest hurts",
