@@ -175,7 +175,57 @@ Speed parity is acceptable because ASR runs asynchronously — a 1700ms transcri
 
 ---
 
-## Summary
+## End-to-End Latency
+
+The system operates two parallel tracks simultaneously. Speech processing never blocks the inference loop.
+
+### Track 1: Vitals + Vision → Dashboard (always running)
+
+This is the core inference pipeline, running every 500ms regardless of whether the patient is speaking.
+
+| Step | Latency |
+|------|---------|
+| Sensor read (MAX30100 + MLX90614) | 1.297 ms |
+| Normalisation | 0.020 ms |
+| Triage NN inference | 0.430 ms |
+| Blackboard write | 0.001 ms |
+| HTTP POST → laptop | 9.778 ms |
+| WebSocket push → browser | ~1 ms |
+| **Total** | **~11.5 ms** |
+
+From sensor read to dashboard update: **~11.5ms** (P95: ~15ms).
+
+For context, a human blink takes ~150ms — this pipeline is roughly 13x faster.
+
+### Track 2: Speech → Dashboard (triggered on button release)
+
+This track runs asynchronously in the Speech thread. It begins processing when the user releases the button.
+
+| Step | Latency |
+|------|---------|
+| ASR transcription (2–5s speech) | ~1700 ms |
+| Symptom embedding (KNN classify) | ~107 ms |
+| Blackboard write | ~0.001 ms |
+| Next inference cycle picks up flags | ≤500 ms |
+| HTTP POST → laptop | ~10 ms |
+| **Total from button release** | **~2.3 seconds** |
+
+### Combined scenario (vitals + speech)
+
+When a patient speaks while vitals are being monitored:
+
+```
+t=0ms      Button released, speech processing begins
+t=0–500ms  Inference loop continues — vitals/EAR updating dashboard every 500ms
+t=~1800ms  ASR + embedding complete, chest_pain/breathless written to blackboard
+t=~2300ms  Next inference cycle sends updated triage level to dashboard
+```
+
+The triage level on the dashboard reflects the latest speech flags within **~2.3 seconds** of the patient finishing speaking. Vitals and EAR continue updating independently throughout.
+
+---
+
+
 
 | PASO Stage | Finding | Action Taken |
 |------------|---------|--------------|
