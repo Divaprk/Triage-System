@@ -1,35 +1,135 @@
-# AI-Powered Edge Triage System (Team G35)
+# Pi 5 Triage System
 
-## 📌 Project Overview
-The AI-Powered Edge Triage System is an automated medical assessment tool designed for the **INF2009: Edge Computing & Analytics** module[cite: 1, 2]. The system aims to standardize and accelerate the patient prioritization process in Emergency Rooms or hospital wards by performing real-time analytics at the edge.
-
-Using a **Raspberry Pi 5**, the system fuses biometric data, verbal complaints, and visual indicators to classify patients into Patient Acuity Categories (PAC) 1 through 4[cite: 25, 41, 58, 59, 60].
+An edge-based patient triage system running on a Raspberry Pi 5. It fuses vision, vitals, and speech inputs to classify patients in real time as **CRITICAL**, **URGENT**, or **STABLE**.
 
 ---
 
-## 🏗️ Core Features
-The project integrates three primary data streams for a comprehensive patient assessment:
+## How It Works
 
-* **Vitals:** Heart rate, $SPO_2$, and body temperature collected via wearable devices (e.g., Samsung Galaxy Watch or Fitbit) or backup sensors.
-* **Speech:** Local Speech-to-Text (STT) and LLM inference to extract the patient's "Chief Complaint".
-* **Vision:** Computer vision to detect physical characteristics like eye dilation, sweating, or abnormal movement. (Undecided)
+Four threads run concurrently on the Pi, writing to a shared blackboard:
 
----
+| Thread | Input | Output |
+|---|---|---|
+| Vision | Webcam | Eye Aspect Ratio (EAR) — detects alertness |
+| Vitals | MAX30100 + MLX90614 | Heart rate, SpO2, temperature |
+| Speech | Microphone (push-to-talk) | Chest pain, breathlessness flags |
+| Inference | Blackboard | Triage level → HTTP POST to laptop |
 
-## 📂 Project Structure
-Following the required work packages, the project is organized as follows:
-
-* `/docs`: Project documentation, hardware justifications, and meeting notes.
-* `/vitals`: Biometric data acquisition and sensor integration.
-* `/speech`: Audio processing and local LLM logic.
-* `/vision`: Camera-based symptom detection.
-* `/dashboard`: User interface for medical staff to view real-time triage results[cite: 233, 234].
+A lightweight neural network (`triage_model.pth`) runs every 0.5s and classifies the patient based on all sensor inputs combined.
 
 ---
 
-## 👥 The Team
-* **Alexi George**
-* **Cavell Lim**
-* **Lin Yu Chuan**
-* **Bryan Law**
-* **Divakaran Prakash**
+## Hardware Required
+
+- Raspberry Pi 5
+- MAX30100 pulse oximeter (I2C)
+- MLX90614 IR temperature sensor (I2C)
+- USB webcam
+- USB microphone
+- Tactile push button on GPIO17
+
+---
+
+## Folder Structure
+
+```
+triage_system/
+├── README.md
+├── .gitignore
+├── laptop_receiver.py          # Run this on your laptop to view the dashboard
+├── run_triage.sh               # Entry point for the Pi
+├── requirements.txt            # Pi Python dependencies
+├── triage_model.pth            # Trained triage neural network
+│
+├── core/                       # Runtime code
+│   ├── orchestrator2.py        # Main thread manager + blackboard
+│   ├── vision.py               # EAR calculation via MediaPipe
+│   ├── pi_push_vitals.py       # HR / SpO2 / temp sensing
+│   ├── max30100.py             # MAX30100 I2C driver
+│   ├── transcriber_integrated2.py  # Push-to-talk VAD + ASR pipeline
+│   ├── asr.py                  # Faster-Whisper wrapper
+│   └── symptom_embedder.py     # KNN symptom detection
+│
+├── anchors/                    # Precomputed sentence embeddings
+│   ├── chest_pain_pos_anchors.npy
+│   ├── chest_pain_neg_anchors.npy
+│   ├── breathlessness_pos_anchors.npy
+│   └── breathlessness_neg_anchors.npy
+│
+└── benchmarks/                 # Profiling scripts (not part of runtime)
+    ├── diagnostics.py
+    └── paso_benchmarks.py
+```
+
+---
+
+## Setup
+
+**1. Clone the repo onto your Pi:**
+```bash
+git clone <repo-url> ~/triage_system
+cd ~/triage_system
+```
+
+**2. Create and activate a virtual environment:**
+```bash
+python3.11 -m venv venv
+source venv/bin/activate
+```
+
+**3. Install dependencies:**
+```bash
+pip install -r requirements.txt
+```
+
+> This will take a while on the first run due to PyTorch and the sentence-transformers model.
+
+---
+
+## Running the System
+
+```bash
+bash run_triage.sh
+```
+
+This activates the venv and launches the orchestrator. All four threads start automatically.
+
+**Push-to-Talk:** Hold the button on GPIO17 to speak. Release when done — the system will transcribe and detect symptoms automatically.
+
+**Shutdown:** Press `Ctrl+C` for a clean shutdown.
+
+---
+
+## Receiving Data (Laptop Side)
+
+Run `laptop_receiver.py` on your laptop to see the live dashboard:
+
+```bash
+pip install flask flask-socketio
+python laptop_receiver.py
+```
+
+Then open your browser at `http://127.0.0.1:5001`.
+
+The Pi POSTs triage results every 0.5s to:
+```
+http://192.168.137.1:5001/update_vitals
+```
+
+Make sure your laptop is connected to the Pi via USB network sharing (ICS) with the laptop IP set to `192.168.137.1`.
+
+---
+
+## Dependencies
+
+Key packages (see `requirements.txt` for full list):
+
+| Package | Purpose |
+|---|---|
+| `torch` | Triage neural network inference |
+| `faster-whisper` | Speech-to-text (INT8, optimised for Pi) |
+| `sentence-transformers` | Symptom embedding model |
+| `mediapipe` | Face mesh / EAR calculation |
+| `smbus2` | I2C communication with sensors |
+| `gpiozero` | GPIO button control |
+| `sounddevice` | Microphone audio capture |

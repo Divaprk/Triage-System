@@ -1,0 +1,14 @@
+# Virtual environment
+venv/
+
+# Python cache
+__pycache__/
+*.pyc
+*.pyo
+
+# Benchmark output artifacts
+*.json
+
+# OS files
+.DS_Store
+Thumbs.db

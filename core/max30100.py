@@ -7,7 +7,7 @@
   September 2017
 """
 
-import smbus
+import smbus2 as  smbus
 
 INT_STATUS   = 0x00  # Which interrupts are tripped
 INT_ENABLE   = 0x01  # Which interrupts are active

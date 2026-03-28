@@ -108,7 +108,7 @@ last_valid_spo2 = None
 last_valid_hr = None
 consecutive_failures = 0
 
-print("? Sensors initialized. Starting vitals monitor (EDGE processing enabled)...")
+# print("? Sensors initialized. Starting vitals monitor (EDGE processing enabled)...")
 system_start = time.time()
 
 # ----------------------------
@@ -290,118 +290,75 @@ def send_to_endpoint(data):
 # ----------------------------
 # MAIN LOOP
 # ----------------------------
-try:
-    while True:
-        now = time.time()
-        
-        # ---- Read MAX30100 ----
-        try:
-            m.read_sensor()
-            ir_value = m.ir
-            red_value = m.red
-        except Exception as e:
-            print(f"? MAX30100 read error: {e}")
-            ir_value, red_value = None, None
-        
-        # ---- Read MLX90614 Temperature ----  UPDATED SECTION
-        try:
-            if USE_OBJECT_TEMP:
-                temperature = read_mlx90614_temperature(mlx_bus, MLX90614_REG_OBJECT)
-            else:
-                temperature = read_mlx90614_temperature(mlx_bus, MLX90614_REG_AMBIENT)
-        except Exception as e:
-            print(f"? MLX90614 read error: {e}")
-            temperature = None
-        
-        # ---- Store in sliding buffers ----
-        if ir_value is not None and red_value is not None:
-            ir_buffer.append(ir_value)
-            red_buffer.append(red_value)
-            time_buffer.append(now)
-        
-        # ---- Process when enough data accumulated ----
-        if len(ir_buffer) >= int(WINDOW_SECONDS / SAMPLE_RATE):
-            
-            finger_present, signal_good, detection_reason = detect_finger_and_signal_quality(ir_buffer, red_buffer)
-            
-            if not finger_present:
-                hr = None
-                spo2 = None
-                last_valid_hr = None
-                last_valid_spo2 = None
-                consecutive_failures = 0
-                temp_str = f"{temperature:.1f}C" if temperature else "N/A"
-                print(f"? NO FINGER DETECTED | HR: None | SpO2: None | Temp: {temp_str}")
-                time.sleep(SAMPLE_RATE)
-                continue
-            
-            if signal_good:
-                hr, hr_confidence = detect_heart_rate(time_buffer, ir_buffer)
-                hr = validate_with_hysteresis(hr, last_valid_hr, MIN_BPM, MAX_BPM, hold_cycles=2)
-                if hr is not None:
-                    last_valid_hr = hr
-                
-                spo2_raw, spo2_status = calculate_spo2_ratio(red_buffer, ir_buffer)
-                
-                if spo2_status == "valid":
-                    spo2 = validate_with_hysteresis(spo2_raw, last_valid_spo2, SPO2_LOW_THRESHOLD, SPO2_HIGH_THRESHOLD)
-                elif spo2_status == "low_confidence":
-                    spo2 = validate_with_hysteresis(spo2_raw, last_valid_spo2, 70, 100)
-                else:
-                    spo2 = None
-                
-                if spo2 is not None:
-                    last_valid_spo2 = spo2
-            else:
-                hr = None
-                spo2 = None
-
-            
-            # Display output
-            status_icon = "?" if signal_good else "?"
-            temp_str = f"{temperature:.1f}C" if temperature is not None else "N/A"
-            hr_str = f"{hr:.1f}" if hr is not None else "None"
-            spo2_str = f"{spo2}%" if spo2 is not None else "None"
-            
-            print(f"{status_icon} HR: {hr_str} BPM | SpO2: {spo2_str} | Temp: {temp_str} [{detection_reason}]")
-            
-            # Optional HTTP POST
-            if ENABLE_HTTP_POST:
-                payload = {
-                    "timestamp": time.time(),
-                    "heart_rate_bpm": hr,
-                    "spo2_percent": spo2,
-                    "temperature_c": temperature,
-                    "finger_present": finger_present,
-                    "signal_quality": detection_reason
-                }
-                send_to_endpoint(payload)
-        
-        if DEBUG:
-            ir_recent = np.array(list(ir_buffer)[-40:])
-            print(f"  [CALIBRATE] DC_IR: {np.mean(ir_recent):.0f} | "
-                  f"AC_IR: {np.std(ir_recent):.1f} | "
-                  f"AC/DC: {np.std(ir_recent)/np.mean(ir_recent):.3f}")
-        
-        # Maintain sampling rate
-        elapsed = time.time() - now
-        sleep_time = max(0, SAMPLE_RATE - elapsed)
-        time.sleep(sleep_time)
-        
-except KeyboardInterrupt:
-    print("\n? Shutdown requested by user")
-
-finally:
-    print("Cleaning up sensors...")
+if __name__ == "__main__":
     try:
-        m.shutdown()
-    except:
-        pass
-    # Close MLX90614 I2C bus UPDATED CLEANUP
-    if mlx_bus:
+        while True:
+            now = time.time()
+
+            try:
+                m.read_sensor()
+                ir_value = m.ir
+                red_value = m.red
+            except Exception as e:
+                print(f"MAX30100 read error: {e}")
+                ir_value, red_value = None, None
+
+            try:
+                if USE_OBJECT_TEMP:
+                    temperature = read_mlx90614_temperature(mlx_bus, MLX90614_REG_OBJECT)
+                else:
+                    temperature = read_mlx90614_temperature(mlx_bus, MLX90614_REG_AMBIENT)
+            except Exception as e:
+                temperature = None
+
+            if ir_value is not None and red_value is not None:
+                ir_buffer.append(ir_value)
+                red_buffer.append(red_value)
+                time_buffer.append(now)
+
+            if len(ir_buffer) >= int(WINDOW_SECONDS / SAMPLE_RATE):
+                finger_present, signal_good, detection_reason = detect_finger_and_signal_quality(ir_buffer, red_buffer)
+
+                if not finger_present:
+                    last_valid_hr = None
+                    last_valid_spo2 = None
+                    consecutive_failures = 0
+                    time.sleep(SAMPLE_RATE)
+                    continue
+
+                if signal_good:
+                    hr, _ = detect_heart_rate(time_buffer, ir_buffer)
+                    hr = validate_with_hysteresis(hr, last_valid_hr, MIN_BPM, MAX_BPM, hold_cycles=2)
+                    if hr is not None:
+                        last_valid_hr = hr
+
+                    spo2_raw, spo2_status = calculate_spo2_ratio(red_buffer, ir_buffer)
+                    if spo2_status == "valid":
+                        spo2 = validate_with_hysteresis(spo2_raw, last_valid_spo2, SPO2_LOW_THRESHOLD, SPO2_HIGH_THRESHOLD)
+                    elif spo2_status == "low_confidence":
+                        spo2 = validate_with_hysteresis(spo2_raw, last_valid_spo2, 70, 100)
+                    else:
+                        spo2 = None
+                    if spo2 is not None:
+                        last_valid_spo2 = spo2
+                else:
+                    hr = None
+                    spo2 = None
+
+            elapsed = time.time() - now
+            time.sleep(max(0, SAMPLE_RATE - elapsed))
+
+    except KeyboardInterrupt:
+        print("Shutdown requested.")
+
+    finally:
         try:
-            mlx_bus.close()
-            print("? MLX90614 I2C bus closed")
+            m.shutdown()
         except:
             pass
-    print("? Sensors shut down. Goodbye!")
+        if mlx_bus:
+            try:
+                mlx_bus.close()
+            except:
+                pass
+        print("Sensors shut down.")
