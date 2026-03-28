@@ -1,0 +1,98 @@
+{
+  "stage1_sensor_read": {
+    "mean_ms": 1.297,
+    "min_ms": 1.293,
+    "max_ms": 1.337,
+    "p95_ms": 1.304,
+    "p99_ms": 1.319,
+    "hardware": true
+  },
+  "stage2_normalisation": {
+    "mean_ms": 0.02,
+    "min_ms": 0.02,
+    "max_ms": 0.053,
+    "p95_ms": 0.021,
+    "p99_ms": 0.032
+  },
+  "stage3_triage_nn": {
+    "mean_ms": 0.43,
+    "min_ms": 0.306,
+    "max_ms": 11.9,
+    "p95_ms": 0.327,
+    "p99_ms": 0.485,
+    "throughput_per_sec": 2325.6
+  },
+  "stage4_blackboard_write": {
+    "mean_ms": 0.001,
+    "min_ms": 0.001,
+    "max_ms": 0.006,
+    "p95_ms": 0.001,
+    "p99_ms": 0.002
+  },
+  "stage5_http_post": {
+    "mean_ms": 9.778,
+    "min_ms": 5.466,
+    "max_ms": 49.65,
+    "p95_ms": 13.133,
+    "p99_ms": 42.347,
+    "successful_posts": 20,
+    "failed_posts": 0
+  },
+  "stage6_symptom_embedding": {
+    "mean_ms": 107.03,
+    "min_ms": 88.285,
+    "max_ms": 122.802,
+    "p95_ms": 117.847,
+    "p99_ms": 122.754,
+    "phrases_tested": 5
+  },
+  "stage7_asr": {
+    "audio_2s": {
+      "mean_ms": 1963.43,
+      "min_ms": 1805.522,
+      "max_ms": 2301.117,
+      "p95_ms": 2226.7,
+      "p99_ms": 2286.234
+    },
+    "audio_5s": {
+      "mean_ms": 1576.723,
+      "min_ms": 1516.011,
+      "max_ms": 1622.865,
+      "p95_ms": 1618.141,
+      "p99_ms": 1621.92
+    },
+    "note": "Async thread \u2014 excluded from pipeline budget"
+  },
+  "pipeline_summary": {
+    "total_pipeline_mean_ms": 11.526,
+    "inference_interval_ms": 500,
+    "headroom_ms": 488.474,
+    "stages": [
+      {
+        "stage": "Sensor Read",
+        "mean_ms": 1.297,
+        "p95_ms": 1.304
+      },
+      {
+        "stage": "Normalisation",
+        "mean_ms": 0.02,
+        "p95_ms": 0.021
+      },
+      {
+        "stage": "Triage NN",
+        "mean_ms": 0.43,
+        "p95_ms": 0.327
+      },
+      {
+        "stage": "Blackboard Write",
+        "mean_ms": 0.001,
+        "p95_ms": 0.001
+      },
+      {
+        "stage": "HTTP POST",
+        "mean_ms": 9.778,
+        "p95_ms": 13.133
+      }
+    ]
+  }
+}

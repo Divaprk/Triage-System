@@ -1,0 +1,26 @@
+
+Pi 5 Triage System — RAM Breakdown Report
+Generated: 2026-03-28 11:50:28
+=======================================================
+
+SYSTEM OVERVIEW
+  Pi 5 RAM total        : 7.87 GB
+  RAM at baseline       : 13.4 MB (Python + imports)
+  RAM at full load      : 943.1 MB
+  System RAM available  : 6.62 GB
+  Disk free             : 1.74 GB
+
+PER-COMPONENT RAM DELTA
+Component                             Delta (MB)
+-------------------------------------------------
+PyTorch + Triage NN                        474.9
+Sentence-Transformers                      275.2
+Faster-Whisper tiny INT8                    85.9
+Silero VAD                                   6.5
+MediaPipe FaceMesh                          56.6
+
+=======================================================
+ASSESSMENT
+  All components fit comfortably within 8GB RAM.
+  No swap usage observed under full load.
+  Disk free (1.74 GB) is sufficient for log storage.

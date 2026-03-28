@@ -1,0 +1,29 @@
+
+Pi 5 Triage System — Pipeline Latency Budget Report
+Generated: 2026-03-28 12:12:02
+=======================================================
+
+COMPONENT LATENCY BREAKDOWN (100 runs each)
+
+Stage                   Mean (ms)   P95 (ms)   P99 (ms)
+------------------------------------------------------
+Sensor Read                 1.297      1.304      1.319
+Normalisation                0.02      0.021      0.032
+Triage NN                    0.43      0.327      0.485
+Blackboard Write            0.001      0.001      0.002
+HTTP POST                   9.778     13.133     42.347
+Symptom Embed              107.03    117.847    122.754
+
+=======================================================
+PIPELINE BUDGET (excluding async ASR)
+
+  Total mean latency : 11.526 ms
+  Inference interval : 500 ms
+  Headroom           : 488.474 ms
+
+ASR LATENCY (async — Speech thread, does not block inference)
+  2s audio : 1963.43 ms mean
+  5s audio : 1576.723 ms mean
+  Note     : Async thread — excluded from pipeline budget
+
+=======================================================

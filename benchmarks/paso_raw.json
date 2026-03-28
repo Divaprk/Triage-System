@@ -1,0 +1,373 @@
+{
+  "per_thread_cpu": {
+    "threads": [
+      {
+        "name": "Main/OS",
+        "cpu_pct": 11.8,
+        "cpu_user_sec": 3.18,
+        "cpu_sys_sec": 0.25,
+        "pct_of_total": 12.8
+      },
+      {
+        "name": "Vision",
+        "cpu_pct": 8.5,
+        "cpu_user_sec": 1.44,
+        "cpu_sys_sec": 0.19,
+        "pct_of_total": 9.3
+      },
+      {
+        "name": "Vitals",
+        "cpu_pct": 8.5,
+        "cpu_user_sec": 1.45,
+        "cpu_sys_sec": 0.18,
+        "pct_of_total": 9.3
+      },
+      {
+        "name": "Speech",
+        "cpu_pct": 7.7,
+        "cpu_user_sec": 2.15,
+        "cpu_sys_sec": 0.1,
+        "pct_of_total": 8.4
+      },
+      {
+        "name": "Inference",
+        "cpu_pct": 6.5,
+        "cpu_user_sec": 1.22,
+        "cpu_sys_sec": 0.02,
+        "pct_of_total": 7.1
+      },
+      {
+        "name": "Thread-5",
+        "cpu_pct": 6.4,
+        "cpu_user_sec": 1.21,
+        "cpu_sys_sec": 0.01,
+        "pct_of_total": 7.0
+      },
+      {
+        "name": "Thread-6",
+        "cpu_pct": 6.3,
+        "cpu_user_sec": 1.2,
+        "cpu_sys_sec": 0.01,
+        "pct_of_total": 6.9
+      },
+      {
+        "name": "Thread-7",
+        "cpu_pct": 4.5,
+        "cpu_user_sec": 1.28,
+        "cpu_sys_sec": 0.03,
+        "pct_of_total": 4.9
+      },
+      {
+        "name": "Thread-8",
+        "cpu_pct": 4.2,
+        "cpu_user_sec": 1.19,
+        "cpu_sys_sec": 0.02,
+        "pct_of_total": 4.5
+      },
+      {
+        "name": "Thread-9",
+        "cpu_pct": 4.0,
+        "cpu_user_sec": 1.13,
+        "cpu_sys_sec": 0.03,
+        "pct_of_total": 4.3
+      },
+      {
+        "name": "Thread-10",
+        "cpu_pct": 3.8,
+        "cpu_user_sec": 1.09,
+        "cpu_sys_sec": 0.02,
+        "pct_of_total": 4.2
+      },
+      {
+        "name": "Thread-11",
+        "cpu_pct": 2.7,
+        "cpu_user_sec": 0.38,
+        "cpu_sys_sec": 0.41,
+        "pct_of_total": 3.0
+      },
+      {
+        "name": "Thread-12",
+        "cpu_pct": 2.6,
+        "cpu_user_sec": 0.72,
+        "cpu_sys_sec": 0.03,
+        "pct_of_total": 2.8
+      },
+      {
+        "name": "Thread-13",
+        "cpu_pct": 2.5,
+        "cpu_user_sec": 0.29,
+        "cpu_sys_sec": 0.44,
+        "pct_of_total": 2.7
+      },
+      {
+        "name": "Thread-14",
+        "cpu_pct": 2.3,
+        "cpu_user_sec": 0.27,
+        "cpu_sys_sec": 0.39,
+        "pct_of_total": 2.5
+      },
+      {
+        "name": "Thread-15",
+        "cpu_pct": 2.2,
+        "cpu_user_sec": 0.39,
+        "cpu_sys_sec": 0.03,
+        "pct_of_total": 2.4
+      },
+      {
+        "name": "Thread-16",
+        "cpu_pct": 1.8,
+        "cpu_user_sec": 0.46,
+        "cpu_sys_sec": 0.05,
+        "pct_of_total": 1.9
+      },
+      {
+        "name": "Thread-17",
+        "cpu_pct": 1.4,
+        "cpu_user_sec": 0.12,
+        "cpu_sys_sec": 0.3,
+        "pct_of_total": 1.6
+      },
+      {
+        "name": "Thread-18",
+        "cpu_pct": 0.9,
+        "cpu_user_sec": 0.26,
+        "cpu_sys_sec": 0.01,
+        "pct_of_total": 1.0
+      },
+      {
+        "name": "Thread-19",
+        "cpu_pct": 0.9,
+        "cpu_user_sec": 0.26,
+        "cpu_sys_sec": 0.0,
+        "pct_of_total": 1.0
+      },
+      {
+        "name": "Thread-20",
+        "cpu_pct": 0.9,
+        "cpu_user_sec": 0.26,
+        "cpu_sys_sec": 0.0,
+        "pct_of_total": 1.0
+      },
+      {
+        "name": "Thread-21",
+        "cpu_pct": 0.8,
+        "cpu_user_sec": 0.22,
+        "cpu_sys_sec": 0.0,
+        "pct_of_total": 0.8
+      },
+      {
+        "name": "Thread-22",
+        "cpu_pct": 0.4,
+        "cpu_user_sec": 0.09,
+        "cpu_sys_sec": 0.03,
+        "pct_of_total": 0.4
+      },
+      {
+        "name": "Thread-23",
+        "cpu_pct": 0.0,
+        "cpu_user_sec": 0.01,
+        "cpu_sys_sec": 0.0,
+        "pct_of_total": 0.0
+      },
+      {
+        "name": "Thread-24",
+        "cpu_pct": 0.0,
+        "cpu_user_sec": 0.01,
+        "cpu_sys_sec": 0.0,
+        "pct_of_total": 0.0
+      },
+      {
+        "name": "Thread-25",
+        "cpu_pct": 0.0,
+        "cpu_user_sec": 0.0,
+        "cpu_sys_sec": 0.01,
+        "pct_of_total": 0.0
+      },
+      {
+        "name": "Thread-26",
+        "cpu_pct": 0.0,
+        "cpu_user_sec": 0.0,
+        "cpu_sys_sec": 0.01,
+        "pct_of_total": 0.0
+      },
+      {
+        "name": "Thread-27",
+        "cpu_pct": 0.0,
+        "cpu_user_sec": 0.01,
+        "cpu_sys_sec": 0.0,
+        "pct_of_total": 0.0
+      },
+      {
+        "name": "Thread-28",
+        "cpu_pct": 0.0,
+        "cpu_user_sec": 0.01,
+        "cpu_sys_sec": 0.0,
+        "pct_of_total": 0.0
+      },
+      {
+        "name": "Thread-29",
+        "cpu_pct": 0.0,
+        "cpu_user_sec": 0.0,
+        "cpu_sys_sec": 0.0,
+        "pct_of_total": 0.0
+      },
+      {
+        "name": "Thread-30",
+        "cpu_pct": 0.0,
+        "cpu_user_sec": 0.0,
+        "cpu_sys_sec": 0.0,
+        "pct_of_total": 0.0
+      },
+      {
+        "name": "Thread-31",
+        "cpu_pct": 0.0,
+        "cpu_user_sec": 0.0,
+        "cpu_sys_sec": 0.0,
+        "pct_of_total": 0.0
+      },
+      {
+        "name": "Thread-32",
+        "cpu_pct": 0.0,
+        "cpu_user_sec": 0.0,
+        "cpu_sys_sec": 0.0,
+        "pct_of_total": 0.0
+      },
+      {
+        "name": "Thread-33",
+        "cpu_pct": 0.0,
+        "cpu_user_sec": 0.0,
+        "cpu_sys_sec": 0.0,
+        "pct_of_total": 0.0
+      },
+      {
+        "name": "Thread-34",
+        "cpu_pct": 0.0,
+        "cpu_user_sec": 0.0,
+        "cpu_sys_sec": 0.0,
+        "pct_of_total": 0.0
+      },
+      {
+        "name": "Thread-35",
+        "cpu_pct": 0.0,
+        "cpu_user_sec": 0.0,
+        "cpu_sys_sec": 0.0,
+        "pct_of_total": 0.0
+      },
+      {
+        "name": "Thread-36",
+        "cpu_pct": 0.0,
+        "cpu_user_sec": 0.0,
+        "cpu_sys_sec": 0.0,
+        "pct_of_total": 0.0
+      },
+      {
+        "name": "Thread-37",
+        "cpu_pct": 0.0,
+        "cpu_user_sec": 0.0,
+        "cpu_sys_sec": 0.0,
+        "pct_of_total": 0.0
+      },
+      {
+        "name": "Thread-38",
+        "cpu_pct": 0.0,
+        "cpu_user_sec": 0.0,
+        "cpu_sys_sec": 0.0,
+        "pct_of_total": 0.0
+      },
+      {
+        "name": "Thread-39",
+        "cpu_pct": 0.0,
+        "cpu_user_sec": 0.0,
+        "cpu_sys_sec": 0.0,
+        "pct_of_total": 0.0
+      },
+      {
+        "name": "Thread-40",
+        "cpu_pct": 0.0,
+        "cpu_user_sec": 0.0,
+        "cpu_sys_sec": 0.0,
+        "pct_of_total": 0.0
+      },
+      {
+        "name": "Thread-41",
+        "cpu_pct": 0.0,
+        "cpu_user_sec": 0.0,
+        "cpu_sys_sec": 0.0,
+        "pct_of_total": 0.0
+      },
+      {
+        "name": "Thread-42",
+        "cpu_pct": 0.0,
+        "cpu_user_sec": 0.0,
+        "cpu_sys_sec": 0.0,
+        "pct_of_total": 0.0
+      },
+      {
+        "name": "Thread-43",
+        "cpu_pct": 0.0,
+        "cpu_user_sec": 0.0,
+        "cpu_sys_sec": 0.0,
+        "pct_of_total": 0.0
+      },
+      {
+        "name": "Thread-44",
+        "cpu_pct": 0.0,
+        "cpu_user_sec": 0.0,
+        "cpu_sys_sec": 0.0,
+        "pct_of_total": 0.0
+      },
+      {
+        "name": "Thread-45",
+        "cpu_pct": 0.0,
+        "cpu_user_sec": 0.0,
+        "cpu_sys_sec": 0.0,
+        "pct_of_total": 0.0
+      },
+      {
+        "name": "Thread-46",
+        "cpu_pct": 0.0,
+        "cpu_user_sec": 0.0,
+        "cpu_sys_sec": 0.0,
+        "pct_of_total": 0.0
+      },
+      {
+        "name": "Thread-47",
+        "cpu_pct": 0.0,
+        "cpu_user_sec": 0.0,
+        "cpu_sys_sec": 0.0,
+        "pct_of_total": 0.0
+      },
+      {
+        "name": "Thread-48",
+        "cpu_pct": 0.0,
+        "cpu_user_sec": 0.0,
+        "cpu_sys_sec": 0.0,
+        "pct_of_total": 0.0
+      },
+      {
+        "name": "Thread-49",
+        "cpu_pct": 0.0,
+        "cpu_user_sec": 0.0,
+        "cpu_sys_sec": 0.0,
+        "pct_of_total": 0.0
+      },
+      {
+        "name": "Thread-50",
+        "cpu_pct": 0.0,
+        "cpu_user_sec": 0.0,
+        "cpu_sys_sec": 0.0,
+        "pct_of_total": 0.0
+      },
+      {
+        "name": "Thread-51",
+        "cpu_pct": 0.0,
+        "cpu_user_sec": 0.0,
+        "cpu_sys_sec": 0.0,
+        "pct_of_total": 0.0
+      }
+    ],
+    "total_cpu_pct": 91.9,
+    "duration_sec": 30,
+    "sample_count": 30
+  }
+}
