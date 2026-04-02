@@ -169,6 +169,11 @@ def vision_thread():
     cap.set(cv2.CAP_PROP_FRAME_WIDTH, 640)
     cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 480)
 
+    # Timers for state changes — only trigger after 5 continuous seconds in threshold
+    HOLD_SEC = 5.0
+    drowsy_since = None
+    low_ear_since = None
+
     while True:
         success, frame = cap.read()
         if not success:
@@ -183,18 +188,36 @@ def vision_thread():
             avg_ear   = (left_ear + right_ear) / 2.0
             write_board(ear=avg_ear, vision_ok=True)
 
-            mp.solutions.drawing_utils.draw_landmarks(
-                frame, results.multi_face_landmarks[0],
-                mp_face_mesh.FACEMESH_CONTOURS,
-                landmark_drawing_spec=None,
-                connection_drawing_spec=mp.solutions.drawing_styles.get_default_face_mesh_contours_style()
-            )
-            if avg_ear >= 0.35:
+            # Face mesh lines removed — no overlay drawn
+
+            if avg_ear >= 0.30:
+                # ALERT — reset all timers
                 status, color = "ALERT", (0, 255, 0)
-            elif avg_ear >= 0.18:
-                status, color = "DROWSY", (0, 165, 255)
+                drowsy_since = None
+                low_ear_since = None
+            elif avg_ear >= 0.12:
+                # Potential DROWSY — start timer, reset unresponsive timer
+                low_ear_since = None
+                if drowsy_since is None:
+                    drowsy_since = time.time()
+                elapsed = time.time() - drowsy_since
+                if elapsed >= HOLD_SEC:
+                    status, color = "DROWSY", (0, 165, 255)
+                else:
+                    # Still in hold window — stay ALERT until confirmed
+                    status, color = "ALERT", (0, 255, 0)
             else:
-                status, color = "UNRESPONSIVE", (0, 0, 255)
+                # Potential UNRESPONSIVE — reset drowsy timer, start unresponsive timer
+                drowsy_since = None
+                if low_ear_since is None:
+                    low_ear_since = time.time()
+                elapsed = time.time() - low_ear_since
+                if elapsed >= HOLD_SEC:
+                    status, color = "UNRESPONSIVE", (0, 0, 255)
+                else:
+                    # Still in hold window — show DROWSY until confirmed
+                    status, color = "DROWSY", (0, 165, 255)
+
             cv2.putText(frame, f"EAR: {avg_ear:.2f}", (20, 40), cv2.FONT_HERSHEY_SIMPLEX, 1.0, color, 2)
             cv2.putText(frame, status, (20, 80), cv2.FONT_HERSHEY_SIMPLEX, 1.0, color, 2)
         cv2.imshow("Triage Vision", frame)
