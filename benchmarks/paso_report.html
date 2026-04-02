@@ -1,0 +1,587 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PASO Benchmark Report — Pi 5 Triage System</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: 'Segoe UI', Arial, sans-serif; background: #fff; color: #1a1a1a; }
+
+  .page { max-width: 1100px; margin: 0 auto; padding: 40px 30px; }
+
+  h1 { font-size: 2rem; color: #c0392b; border-bottom: 3px solid #c0392b; padding-bottom: 12px; margin-bottom: 8px; }
+  .subtitle { color: #888; font-size: 0.95rem; margin-bottom: 40px; }
+
+  h2 { font-size: 1.3rem; color: #c0392b; margin-bottom: 6px; margin-top: 48px; }
+  h3 { font-size: 1rem; color: #7b1c1c; margin-bottom: 10px; margin-top: 24px; font-weight: 600; }
+
+  .section { margin-bottom: 56px; }
+
+  .explanation {
+    background: #fff5f5;
+    border-left: 4px solid #c0392b;
+    padding: 14px 18px;
+    border-radius: 4px;
+    font-size: 0.93rem;
+    line-height: 1.7;
+    color: #333;
+    margin-bottom: 20px;
+  }
+
+  .chart-wrap {
+    background: #fff;
+    border: 1px solid #f5c6c6;
+    border-radius: 8px;
+    padding: 20px;
+    margin-bottom: 20px;
+  }
+
+  .chart-title {
+    font-size: 0.85rem;
+    color: #888;
+    margin-bottom: 12px;
+    text-align: center;
+    font-style: italic;
+  }
+
+  canvas { display: block; margin: 0 auto; }
+
+  .save-btn {
+    display: inline-block;
+    margin-top: 10px;
+    padding: 7px 18px;
+    background: #c0392b;
+    color: #fff;
+    border: none;
+    border-radius: 4px;
+    font-size: 0.82rem;
+    cursor: pointer;
+    font-family: inherit;
+  }
+  .save-btn:hover { background: #a93226; }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.9rem;
+    margin-top: 14px;
+  }
+  th {
+    background: #c0392b;
+    color: #fff;
+    padding: 9px 12px;
+    text-align: left;
+    font-weight: 600;
+  }
+  td { padding: 8px 12px; border-bottom: 1px solid #fde8e8; }
+  tr:nth-child(even) td { background: #fff5f5; }
+  tr:last-child td { font-weight: 700; background: #fde8e8; }
+
+  .paso-grid {
+    display: grid;
+    grid-template-columns: 80px 1fr 1fr;
+    gap: 1px;
+    background: #fde8e8;
+    border: 1px solid #fde8e8;
+    border-radius: 6px;
+    overflow: hidden;
+    margin-top: 14px;
+  }
+  .paso-cell {
+    background: #fff;
+    padding: 12px 16px;
+    font-size: 0.9rem;
+    line-height: 1.5;
+  }
+  .paso-label {
+    background: #c0392b;
+    color: #fff;
+    font-weight: 700;
+    font-size: 1rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .paso-header {
+    background: #7b1c1c;
+    color: #fff;
+    font-weight: 600;
+    font-size: 0.85rem;
+    padding: 8px 16px;
+  }
+
+  .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
+
+  @media (max-width: 700px) { .two-col { grid-template-columns: 1fr; } }
+</style>
+</head>
+<body>
+<div class="page">
+
+  <h1>PASO Benchmark Report</h1>
+  <div class="subtitle">Pi 5 Triage System &mdash; Edge Performance Analysis &mdash; Generated 2026-03-28</div>
+
+  <!-- ─── PASO SUMMARY ─── -->
+  <div class="section">
+    <h2>PASO Summary</h2>
+    <div class="explanation">
+      <strong>Profiling → Analysing → Scheduling → Optimisation.</strong> Every component was measured first, bottlenecks identified from data, and two targeted optimisations benchmarked with before/after results.
+    </div>
+
+    <div class="paso-grid">
+      <div class="paso-header paso-label" style="background:#7b1c1c"></div>
+      <div class="paso-header">Finding</div>
+      <div class="paso-header">Action Taken</div>
+
+      <div class="paso-label">P</div>
+      <div class="paso-cell">Pipeline uses only 2.3% of its 500ms budget. All models fit in 943 MB of 7.87 GB RAM.</div>
+      <div class="paso-cell">Measured CPU per thread, RAM per component, latency per stage across 100 runs.</div>
+
+      <div class="paso-label">A</div>
+      <div class="paso-cell">ASR is the bottleneck at ~1963 ms per transcription. HTTP POST has the highest variance (P99: 42 ms).</div>
+      <div class="paso-cell">ASR isolated in async thread. Push-to-talk limits ASR frequency. 488 ms headroom absorbs HTTP spikes.</div>
+
+      <div class="paso-label">S</div>
+      <div class="paso-cell">4 daemon threads share a blackboard. Lock write costs 0.001 ms — essentially free.</div>
+      <div class="paso-cell">threading.Lock on blackboard. 500 ms inference interval. Daemon threads auto-cleanup on exit.</div>
+
+      <div class="paso-label">O</div>
+      <div class="paso-cell">Anchor encoding took 59.8 ms per file on-the-fly. Whisper FP32 uses 150 MB RAM.</div>
+      <div class="paso-cell">Precomputed .npy anchors → 392x speedup, 239 ms startup saving. INT8 Whisper → 50% RAM reduction.</div>
+    </div>
+  </div>
+
+  <!-- ─── P: PIPELINE LATENCY ─── -->
+  <div class="section">
+    <h2>P — Profiling: Pipeline Latency</h2>
+    <div class="explanation">
+      Each stage timed over 100 runs against a 500 ms inference budget. Total mean: <strong>11.5 ms (2.3% of budget)</strong>. ASR and embedding run async and are excluded — they never block the inference loop.
+    </div>
+
+    <div class="two-col">
+      <div class="chart-wrap">
+        <div class="chart-title">Pipeline stage latency — mean (ms), log scale</div>
+        <canvas id="latencyBar" width="460" height="300"></canvas>
+        <div style="text-align:center"><button class="save-btn" onclick="saveChart('latencyBar','latency_pipeline.png')">Save as PNG</button></div>
+      </div>
+
+      <div class="chart-wrap">
+        <div class="chart-title">Pipeline budget usage (11.5 ms used vs 488.5 ms headroom)</div>
+        <canvas id="budgetDonut" width="460" height="300"></canvas>
+        <div style="text-align:center"><button class="save-btn" onclick="saveChart('budgetDonut','latency_budget.png')">Save as PNG</button></div>
+      </div>
+    </div>
+
+    <table>
+      <tr><th>Stage</th><th>Min (ms)</th><th>Mean (ms)</th><th>P95 (ms)</th><th>P99 (ms)</th><th>Max (ms)</th></tr>
+      <tr><td>Sensor Read</td><td>1.293</td><td>1.297</td><td>1.304</td><td>1.319</td><td>1.337</td></tr>
+      <tr><td>Normalisation</td><td>0.020</td><td>0.020</td><td>0.021</td><td>0.032</td><td>0.053</td></tr>
+      <tr><td>Triage NN</td><td>0.306</td><td>0.430</td><td>0.327</td><td>0.485</td><td>11.9</td></tr>
+      <tr><td>Blackboard Write</td><td>0.001</td><td>0.001</td><td>0.001</td><td>0.002</td><td>0.006</td></tr>
+      <tr><td>HTTP POST</td><td>5.466</td><td>9.778</td><td>13.133</td><td>42.347</td><td>49.65</td></tr>
+      <tr><td>Total Pipeline</td><td>—</td><td>11.526</td><td>—</td><td>—</td><td>—</td></tr>
+    </table>
+
+    <h3>Async stages (do not block inference)</h3>
+    <table>
+      <tr><th>Stage</th><th>Min (ms)</th><th>Mean (ms)</th><th>P95 (ms)</th><th>P99 (ms)</th><th>Max (ms)</th></tr>
+      <tr><td>Symptom Embedding</td><td>88.3</td><td>107.0</td><td>117.8</td><td>122.8</td><td>122.8</td></tr>
+      <tr><td>ASR — 2s audio</td><td>1805.5</td><td>1963.4</td><td>2226.7</td><td>2286.2</td><td>2301.1</td></tr>
+      <tr><td>ASR — 5s audio</td><td>1516.0</td><td>1576.7</td><td>1618.1</td><td>1621.9</td><td>1622.9</td></tr>
+    </table>
+  </div>
+
+  <!-- ─── P: RAM ─── -->
+  <div class="section">
+    <h2>P — Profiling: RAM per Component</h2>
+    <div class="explanation">
+      RAM delta measured per component in isolation. Full load: <strong>943 MB / 7.87 GB (16% used)</strong>, no swap. Largest cost is the <strong>PyTorch runtime (474.9 MB)</strong> — the triage model itself is only 4.1 KB.
+    </div>
+
+    <div class="two-col">
+      <div class="chart-wrap">
+        <div class="chart-title">RAM delta per component (MB)</div>
+        <canvas id="ramBar" width="460" height="300"></canvas>
+        <div style="text-align:center"><button class="save-btn" onclick="saveChart('ramBar','ram_components.png')">Save as PNG</button></div>
+      </div>
+
+      <div class="chart-wrap">
+        <div class="chart-title">Total system RAM usage (943 MB used vs 6.62 GB free)</div>
+        <canvas id="ramDonut" width="460" height="300"></canvas>
+        <div style="text-align:center"><button class="save-btn" onclick="saveChart('ramDonut','ram_system.png')">Save as PNG</button></div>
+      </div>
+    </div>
+
+    <table>
+      <tr><th>Component</th><th>RAM Delta (MB)</th><th>Cumulative (MB)</th></tr>
+      <tr><td>Python baseline</td><td>13.4</td><td>13.4</td></tr>
+      <tr><td>PyTorch + Triage NN</td><td>+474.9</td><td>488.3</td></tr>
+      <tr><td>Sentence-Transformers (MiniLM)</td><td>+275.2</td><td>763.6</td></tr>
+      <tr><td>Faster-Whisper tiny INT8</td><td>+85.9</td><td>849.5</td></tr>
+      <tr><td>Silero VAD</td><td>+6.5</td><td>856.0</td></tr>
+      <tr><td>MediaPipe FaceMesh</td><td>+56.6</td><td>912.6</td></tr>
+      <tr><td>Total at full load</td><td>—</td><td>943.1</td></tr>
+    </table>
+  </div>
+
+  <!-- ─── P: CPU ─── -->
+  <div class="section">
+    <h2>P — Profiling: CPU per Thread</h2>
+    <div class="explanation">
+      30s sample under full load. No thread saturates a core — load is balanced across the Pi 5's 4 cores. <strong>Speech has the highest user time (2.15s)</strong>, confirming ML dominance. <strong>Inference has near-zero sys time (0.02s)</strong>: pure compute, no I/O.
+    </div>
+
+    <div class="chart-wrap">
+      <div class="chart-title">CPU % per named thread (30s sample, full load)</div>
+      <canvas id="cpuBar" width="900" height="300"></canvas>
+      <div style="text-align:center"><button class="save-btn" onclick="saveChart('cpuBar','cpu_threads.png')">Save as PNG</button></div>
+    </div>
+
+    <table>
+      <tr><th>Thread</th><th>CPU %</th><th>User Time (s)</th><th>Sys Time (s)</th><th>% of Total</th></tr>
+      <tr><td>Main / OS</td><td>11.8%</td><td>3.18</td><td>0.25</td><td>12.8%</td></tr>
+      <tr><td>Vision</td><td>8.5%</td><td>1.44</td><td>0.19</td><td>9.3%</td></tr>
+      <tr><td>Vitals</td><td>8.5%</td><td>1.45</td><td>0.18</td><td>9.3%</td></tr>
+      <tr><td>Speech</td><td>7.7%</td><td>2.15</td><td>0.10</td><td>8.4%</td></tr>
+      <tr><td>Inference</td><td>6.5%</td><td>1.22</td><td>0.02</td><td>7.1%</td></tr>
+      <tr><td>Total (all threads)</td><td>91.9%</td><td>—</td><td>—</td><td>100%</td></tr>
+    </table>
+  </div>
+
+  <!-- ─── O: B1 ANCHORS ─── -->
+  <div class="section">
+    <h2>O — Optimisation B1: Precomputed Anchor Embeddings</h2>
+    <div class="explanation">
+      KNN classification uses 146 anchor phrases that were previously encoded on-the-fly at every startup. Running <code>precompute_anchors.py</code> once and caching to <code>.npy</code> files gives a <strong>392x speedup</strong> per file and saves <strong>~239 ms</strong> total at startup.
+    </div>
+
+    <div class="two-col">
+      <div class="chart-wrap">
+        <div class="chart-title">Anchor loading time — before vs after (ms per file)</div>
+        <canvas id="anchorBar" width="460" height="300"></canvas>
+        <div style="text-align:center"><button class="save-btn" onclick="saveChart('anchorBar','optimisation_b1_anchors.png')">Save as PNG</button></div>
+      </div>
+
+      <div class="chart-wrap">
+        <div class="chart-title">Total startup time saved across 4 anchor files</div>
+        <canvas id="anchorSaving" width="460" height="300"></canvas>
+        <div style="text-align:center"><button class="save-btn" onclick="saveChart('anchorSaving','optimisation_b1_saving.png')">Save as PNG</button></div>
+      </div>
+    </div>
+
+    <table>
+      <tr><th>Method</th><th>Time per anchor file</th><th>Total (4 files)</th></tr>
+      <tr><td>On-the-fly encoding (before)</td><td>59.8 ms</td><td>239.2 ms</td></tr>
+      <tr><td>Load precomputed .npy (after)</td><td>0.2 ms</td><td>0.8 ms</td></tr>
+      <tr><td>Speedup</td><td><strong>392x faster</strong></td><td><strong>~239 ms saved</strong></td></tr>
+    </table>
+  </div>
+
+  <!-- ─── O: B2 WHISPER ─── -->
+  <div class="section">
+    <h2>O — Optimisation B2: Faster-Whisper INT8 vs Standard Whisper FP32</h2>
+    <div class="explanation">
+      <strong>INT8's key advantage is RAM, not speed</strong> — quantisation halves the model weight size, saving 75 MB in a system where RAM is shared across 4 concurrent threads. Speed is secondary since ASR runs async and never blocks inference.
+    </div>
+
+    <div class="two-col">
+      <div class="chart-wrap">
+        <div class="chart-title">ASR latency — INT8 vs FP32 baseline (ms)</div>
+        <canvas id="whisperLatency" width="460" height="300"></canvas>
+        <div style="text-align:center"><button class="save-btn" onclick="saveChart('whisperLatency','optimisation_b2_latency.png')">Save as PNG</button></div>
+      </div>
+
+      <div class="chart-wrap">
+        <div class="chart-title">RAM footprint — INT8 vs FP32 (MB)</div>
+        <canvas id="whisperRam" width="460" height="300"></canvas>
+        <div style="text-align:center"><button class="save-btn" onclick="saveChart('whisperRam','optimisation_b2_ram.png')">Save as PNG</button></div>
+      </div>
+    </div>
+
+    <table>
+      <tr><th>Metric</th><th>Faster-Whisper INT8</th><th>Standard Whisper FP32</th></tr>
+      <tr><td>2s audio latency</td><td>1688 ms</td><td>~900 ms</td></tr>
+      <tr><td>5s audio latency</td><td>1697 ms</td><td>~1800 ms</td></tr>
+      <tr><td>RAM footprint</td><td><strong>~75 MB</strong></td><td>~150 MB</td></tr>
+      <tr><td>RAM saving</td><td colspan="2"><strong>~75 MB (50% reduction)</strong></td></tr>
+    </table>
+  </div>
+
+</div>
+
+<script>
+// ── Helpers ──────────────────────────────────────────────────────────────────
+function saveChart(id, filename) {
+  const canvas = document.getElementById(id);
+  const link = document.createElement('a');
+  link.download = filename;
+  link.href = canvas.toDataURL('image/png');
+  link.click();
+}
+
+const RED       = '#c0392b';
+const LIGHT_RED = '#e8a09a';
+const PALE      = '#fde8e8';
+const DARK_RED  = '#7b1c1c';
+const WHITE     = '#ffffff';
+
+function drawBarChart(id, labels, values, colors, xLabel, yLabel, logScale) {
+  const canvas = document.getElementById(id);
+  const ctx = canvas.getContext('2d');
+  const W = canvas.width, H = canvas.height;
+  const pad = { top: 30, right: 20, bottom: 60, left: 70 };
+  const chartW = W - pad.left - pad.right;
+  const chartH = H - pad.top - pad.bottom;
+
+  ctx.clearRect(0, 0, W, H);
+  ctx.fillStyle = '#fff';
+  ctx.fillRect(0, 0, W, H);
+
+  const maxVal = logScale
+    ? Math.pow(10, Math.ceil(Math.log10(Math.max(...values) * 1.2)))
+    : Math.max(...values) * 1.15;
+
+  const toY = v => {
+    if (logScale) {
+      const minLog = Math.log10(0.001);
+      const maxLog = Math.log10(maxVal);
+      return pad.top + chartH - ((Math.log10(Math.max(v, 0.001)) - minLog) / (maxLog - minLog)) * chartH;
+    }
+    return pad.top + chartH - (v / maxVal) * chartH;
+  };
+
+  // Grid lines
+  const ticks = logScale
+    ? [0.001, 0.01, 0.1, 1, 10, 100, 1000, 10000].filter(t => t <= maxVal)
+    : Array.from({length: 6}, (_, i) => (maxVal / 5) * i);
+
+  ctx.strokeStyle = '#fde8e8';
+  ctx.lineWidth = 1;
+  ticks.forEach(t => {
+    const y = toY(t);
+    ctx.beginPath(); ctx.moveTo(pad.left, y); ctx.lineTo(pad.left + chartW, y); ctx.stroke();
+    ctx.fillStyle = '#999'; ctx.font = '11px Segoe UI'; ctx.textAlign = 'right';
+    ctx.fillText(t >= 1 ? t.toLocaleString() : t, pad.left - 6, y + 4);
+  });
+
+  // Bars
+  const barW = Math.min(60, chartW / labels.length * 0.6);
+  const step = chartW / labels.length;
+
+  labels.forEach((label, i) => {
+    const x = pad.left + step * i + step / 2 - barW / 2;
+    const y = toY(values[i]);
+    const barH = (pad.top + chartH) - y;
+
+    ctx.fillStyle = colors[i % colors.length];
+    ctx.fillRect(x, y, barW, barH);
+
+    // Value label on top
+    ctx.fillStyle = '#333'; ctx.font = 'bold 11px Segoe UI'; ctx.textAlign = 'center';
+    const valStr = values[i] >= 100 ? values[i].toFixed(0) : values[i] >= 1 ? values[i].toFixed(1) : values[i].toFixed(3);
+    ctx.fillText(valStr, x + barW / 2, y - 5);
+
+    // X label
+    ctx.fillStyle = '#444'; ctx.font = '11px Segoe UI';
+    const words = label.split('\n');
+    words.forEach((word, wi) => {
+      ctx.fillText(word, x + barW / 2, pad.top + chartH + 16 + wi * 14);
+    });
+  });
+
+  // Axes
+  ctx.strokeStyle = '#c0392b'; ctx.lineWidth = 2;
+  ctx.beginPath(); ctx.moveTo(pad.left, pad.top); ctx.lineTo(pad.left, pad.top + chartH); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(pad.left, pad.top + chartH); ctx.lineTo(pad.left + chartW, pad.top + chartH); ctx.stroke();
+
+  // Y label
+  ctx.save(); ctx.translate(14, pad.top + chartH / 2); ctx.rotate(-Math.PI / 2);
+  ctx.fillStyle = '#555'; ctx.font = '12px Segoe UI'; ctx.textAlign = 'center';
+  ctx.fillText(yLabel, 0, 0); ctx.restore();
+}
+
+function drawDonut(id, labels, values, colors, centerLabel) {
+  const canvas = document.getElementById(id);
+  const ctx = canvas.getContext('2d');
+  const W = canvas.width, H = canvas.height;
+  ctx.clearRect(0, 0, W, H);
+  ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, W, H);
+
+  const cx = W / 2 - 40, cy = H / 2, r = Math.min(W, H) * 0.36, inner = r * 0.55;
+  const total = values.reduce((a, b) => a + b, 0);
+  let angle = -Math.PI / 2;
+
+  values.forEach((v, i) => {
+    const slice = (v / total) * Math.PI * 2;
+    ctx.beginPath();
+    ctx.moveTo(cx, cy);
+    ctx.arc(cx, cy, r, angle, angle + slice);
+    ctx.closePath();
+    ctx.fillStyle = colors[i];
+    ctx.fill();
+    angle += slice;
+  });
+
+  // Hole
+  ctx.beginPath(); ctx.arc(cx, cy, inner, 0, Math.PI * 2);
+  ctx.fillStyle = '#fff'; ctx.fill();
+
+  // Center text
+  ctx.fillStyle = '#c0392b'; ctx.font = 'bold 13px Segoe UI'; ctx.textAlign = 'center';
+  const lines = centerLabel.split('\n');
+  lines.forEach((line, i) => {
+    ctx.fillText(line, cx, cy + (i - (lines.length - 1) / 2) * 18);
+  });
+
+  // Legend
+  const legX = W - 150, legStartY = cy - (labels.length * 22) / 2;
+  labels.forEach((label, i) => {
+    const ly = legStartY + i * 24;
+    ctx.fillStyle = colors[i];
+    ctx.fillRect(legX, ly, 16, 16);
+    ctx.fillStyle = '#333'; ctx.font = '12px Segoe UI'; ctx.textAlign = 'left';
+    const pct = ((values[i] / total) * 100).toFixed(1);
+    ctx.fillText(`${label} (${pct}%)`, legX + 22, ly + 12);
+  });
+}
+
+function drawGroupedBar(id, groups, series, colors) {
+  const canvas = document.getElementById(id);
+  const ctx = canvas.getContext('2d');
+  const W = canvas.width, H = canvas.height;
+  const pad = { top: 30, right: 120, bottom: 50, left: 70 };
+  const chartW = W - pad.left - pad.right;
+  const chartH = H - pad.top - pad.bottom;
+
+  ctx.clearRect(0, 0, W, H);
+  ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, W, H);
+
+  const allVals = series.flatMap(s => s.values);
+  const maxVal = Math.max(...allVals) * 1.15;
+
+  // Grid
+  for (let i = 0; i <= 5; i++) {
+    const v = (maxVal / 5) * i;
+    const y = pad.top + chartH - (v / maxVal) * chartH;
+    ctx.strokeStyle = '#fde8e8'; ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.moveTo(pad.left, y); ctx.lineTo(pad.left + chartW, y); ctx.stroke();
+    ctx.fillStyle = '#999'; ctx.font = '11px Segoe UI'; ctx.textAlign = 'right';
+    ctx.fillText(v >= 1000 ? (v/1000).toFixed(1)+'k' : v.toFixed(0), pad.left - 6, y + 4);
+  }
+
+  const groupW = chartW / groups.length;
+  const barW = Math.min(40, groupW / (series.length + 1));
+
+  groups.forEach((group, gi) => {
+    const gx = pad.left + gi * groupW + groupW / 2;
+    series.forEach((s, si) => {
+      const x = gx - (series.length * barW) / 2 + si * barW;
+      const v = s.values[gi];
+      const bh = (v / maxVal) * chartH;
+      const y = pad.top + chartH - bh;
+      ctx.fillStyle = colors[si];
+      ctx.fillRect(x, y, barW - 3, bh);
+      ctx.fillStyle = '#333'; ctx.font = '10px Segoe UI'; ctx.textAlign = 'center';
+      ctx.fillText(v >= 1000 ? v.toFixed(0) : v, x + (barW - 3) / 2, y - 4);
+    });
+    ctx.fillStyle = '#444'; ctx.font = '12px Segoe UI'; ctx.textAlign = 'center';
+    ctx.fillText(group, gx, pad.top + chartH + 20);
+  });
+
+  // Axes
+  ctx.strokeStyle = '#c0392b'; ctx.lineWidth = 2;
+  ctx.beginPath(); ctx.moveTo(pad.left, pad.top); ctx.lineTo(pad.left, pad.top + chartH); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(pad.left, pad.top + chartH); ctx.lineTo(pad.left + chartW, pad.top + chartH); ctx.stroke();
+
+  // Legend
+  series.forEach((s, i) => {
+    const ly = pad.top + i * 24;
+    ctx.fillStyle = colors[i]; ctx.fillRect(W - 110, ly, 14, 14);
+    ctx.fillStyle = '#333'; ctx.font = '11px Segoe UI'; ctx.textAlign = 'left';
+    ctx.fillText(s.label, W - 92, ly + 11);
+  });
+}
+
+// ── Draw all charts ──────────────────────────────────────────────────────────
+
+// Latency bar (log scale)
+drawBarChart('latencyBar',
+  ['Sensor\nRead', 'Norm-\nalise', 'Triage\nNN', 'Board\nWrite', 'HTTP\nPOST'],
+  [1.297, 0.020, 0.430, 0.001, 9.778],
+  [RED, LIGHT_RED, RED, LIGHT_RED, DARK_RED],
+  'Stage', 'Latency (ms) — log scale', true
+);
+
+// Budget donut
+drawDonut('budgetDonut',
+  ['Pipeline used', 'Headroom'],
+  [11.526, 488.474],
+  [RED, PALE],
+  '500ms\nbudget'
+);
+
+// RAM bar
+drawBarChart('ramBar',
+  ['PyTorch\n+NN', 'MiniLM', 'Whisper\nINT8', 'Media\nPipe', 'Silero\nVAD'],
+  [474.9, 275.2, 85.9, 56.6, 6.5],
+  [DARK_RED, RED, LIGHT_RED, RED, LIGHT_RED],
+  'Component', 'RAM Delta (MB)', false
+);
+
+// RAM donut
+drawDonut('ramDonut',
+  ['Used (943 MB)', 'Free (6.62 GB)'],
+  [943, 6780],
+  [RED, PALE],
+  '7.87 GB\ntotal'
+);
+
+// CPU bar
+drawBarChart('cpuBar',
+  ['Main/OS', 'Vision', 'Vitals', 'Speech', 'Inference'],
+  [11.8, 8.5, 8.5, 7.7, 6.5],
+  [DARK_RED, RED, RED, LIGHT_RED, LIGHT_RED],
+  'Thread', 'CPU %', false
+);
+
+// Anchor comparison bar
+drawGroupedBar('anchorBar',
+  ['Per anchor file'],
+  [
+    { label: 'On-the-fly', values: [59.8] },
+    { label: 'Precomputed .npy', values: [0.2] }
+  ],
+  [RED, LIGHT_RED]
+);
+
+// Anchor saving donut
+drawDonut('anchorSaving',
+  ['Time saved', 'Remaining'],
+  [239.2, 0.8],
+  [RED, PALE],
+  '239 ms\nsaved'
+);
+
+// Whisper latency grouped
+drawGroupedBar('whisperLatency',
+  ['2s audio', '5s audio'],
+  [
+    { label: 'INT8 (measured)', values: [1688, 1697] },
+    { label: 'FP32', values: [900, 1800] }
+  ],
+  [RED, LIGHT_RED]
+);
+
+// Whisper RAM grouped
+drawGroupedBar('whisperRam',
+  ['RAM footprint'],
+  [
+    { label: 'INT8 (~75 MB)', values: [75] },
+    { label: 'FP32 (~150 MB)', values: [150] }
+  ],
+  [RED, LIGHT_RED]
+);
+</script>
+</body>
+</html>
